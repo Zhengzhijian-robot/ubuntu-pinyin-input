@@ -1,0 +1,34 @@
+# Ubuntu 22.04 compatibility and candidate display preferences.
+patch:
+  engine/processors:
+  - ascii_composer
+  - recognizer
+  - key_binder
+  - speller
+  - punctuator
+  - selector
+  - navigator
+  - express_editor
+  engine/segmentors:
+  - ascii_segmentor
+  - matcher
+  - abc_segmentor
+  - affix_segmentor@radical_lookup
+  - punct_segmentor
+  - fallback_segmentor
+  engine/translators:
+  - punct_translator
+  - script_translator
+  - table_translator@custom_phrase
+  - table_translator@melt_eng
+  - table_translator@cn_en
+  - table_translator@radical_lookup
+  engine/filters:
+  - reverse_lookup_filter@radical_reverse_lookup
+  - simplifier@emoji
+  - simplifier@traditionalize
+  - uniquifier
+  translator/spelling_hints: 0
+  translator/always_show_comments: false
+  translator/comment_format:
+  - xform/^.*$//

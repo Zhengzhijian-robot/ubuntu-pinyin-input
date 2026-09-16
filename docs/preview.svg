@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="320" viewBox="0 0 1000 320">
+  <rect width="1000" height="320" rx="20" fill="#f2f6fc"/>
+  <g font-family="Noto Sans CJK SC,Microsoft YaHei,sans-serif">
+    <text x="54" y="54" font-size="23" font-weight="600" fill="#263244">Ubuntu 中文拼音输入法界面</text>
+    <text x="54" y="83" font-size="14" fill="#65758d">清爽蓝白 · Clean Blue</text>
+    <rect x="53" y="118" width="894" height="125" rx="13" fill="#dce5f2" opacity=".6"/>
+    <rect x="50" y="112" width="900" height="124" rx="13" fill="#fff" stroke="#d6e0ed"/>
+    <text x="73" y="150" font-size="22" fill="#2478eb">ni hao<tspan fill="#8aa6cf">│</tspan></text>
+    <rect x="66" y="168" width="119" height="49" rx="7" fill="#2175f0"/>
+    <g font-size="22" fill="#263244">
+      <text x="80" y="200" fill="#fff">1 你好</text>
+      <text x="213" y="200">2 拟好</text>
+      <text x="352" y="200">3 你</text>
+      <text x="464" y="200">4 呢</text>
+      <text x="575" y="200">5 拟</text>
+      <text x="686" y="200">6 妮</text>
+      <text x="797" y="200">7 倪</text>
+    </g>
+    <text x="54" y="284" font-size="15" fill="#65758d">Shift 中英切换　·　Ctrl + 空格 切换输入法　·　空格 / 1–7 选词</text>
+    <text x="946" y="284" font-size="12" text-anchor="end" fill="#8593a6">界面示意 · 候选词仅作展示</text>
+  </g>
+</svg>
