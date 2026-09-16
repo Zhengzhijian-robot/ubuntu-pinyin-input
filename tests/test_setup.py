@@ -1,5 +1,7 @@
 import argparse
+from contextlib import redirect_stdout
 import importlib.util
+import io
 import json
 from pathlib import Path
 import subprocess
@@ -146,6 +148,39 @@ class InstallationTests(unittest.TestCase):
             self.assertFalse((home / setup.RIME).exists())
             self.assertFalse((home / setup.THEME).exists())
             self.assertEqual(commands[-1][-1], sources)
+
+    def test_successful_install_leaves_activation_to_next_session(self):
+        with tempfile.TemporaryDirectory() as temp:
+            home, source = Path(temp) / "home", Path(temp) / "source"
+            source.mkdir()
+            (source / "test.schema.yaml").write_text("test")
+            sources = "[('xkb', 'us'), ('ibus', 'libpinyin')]"
+            calls = []
+
+            def command(args, **kwargs):
+                calls.append(args)
+                allowed = [
+                    ["sudo", "apt-get", "install", "-y", "fcitx5"],
+                    ["gsettings", "get", "org.gnome.desktop.input-sources", "sources"],
+                    ["im-config", "-n", "fcitx5"],
+                    ["gsettings", "set", "org.gnome.desktop.input-sources", "sources", "[('xkb', 'us')]"],
+                ]
+                self.assertIn(args, allowed, "安装期间出现额外的进程或会话操作")
+                return subprocess.CompletedProcess(args, 0, stdout=sources)
+
+            output = io.StringIO()
+            with patch.object(setup, "os_release", return_value={"ID": "ubuntu", "VERSION_ID": "22.04"}), \
+                 patch.dict(setup.os.environ, {"XDG_CURRENT_DESKTOP": "GNOME", "XDG_SESSION_TYPE": "x11"}), \
+                 patch.object(setup, "package_plan", return_value={"fcitx5": "5.0.14"}), \
+                 patch.object(setup, "build_ice", return_value=source), \
+                 patch.object(setup.shutil, "which", return_value="/usr/bin/fcitx5-remote"), \
+                 patch.object(setup.subprocess, "run", side_effect=command), redirect_stdout(output):
+                setup.install(argparse.Namespace(theme_only=False, dry_run=False), home)
+            self.assertEqual(len(calls), 4)
+            self.assertTrue((home / setup.RIME / "test.schema.yaml").exists())
+            self.assertIn("PreeditInApplication=False", (home / ".config/fcitx5/conf/rime.conf").read_text())
+            self.assertIn("安装完成后，请保存工作并重启电脑", output.getvalue())
+            self.assertNotIn("\033[", output.getvalue())
 
 
 if __name__ == "__main__":

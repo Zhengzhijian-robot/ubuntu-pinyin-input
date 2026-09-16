@@ -37,6 +37,16 @@ def stamp():
     return datetime.datetime.now().strftime("%Y%m%d-%H%M%S-%f")
 
 
+def show_restart_notice():
+    message = "安装完成后，请保存工作并重启电脑"
+    color = sys.stdout.isatty() and "NO_COLOR" not in os.environ
+    print("\n" + "=" * 64)
+    print("\033[1;36m" + message + "\033[0m" if color else message)
+    print("=" * 64)
+    print("保存工作 → 桌面右上角电源菜单 → 重新启动。")
+    print("重启并登录后即可使用新配置。\n")
+
+
 def os_release(path=Path("/etc/os-release")):
     values = {}
     for line in path.read_text().splitlines():
@@ -235,12 +245,11 @@ def install(args, home):
         print("适配方式：GNOME /", plan["session"], "；使用当前系统软件源版本。")
         print("将安装：", " ".join(name + "=" + version for name, version in packages.items()))
         if not plan["tested"]:
-            print("此环境采用自动兼容方案，尚未做本项目的桌面实测。")
+            print("此环境自动适配；桌面实测记录见 docs/compatibility.md。")
         if plan["session"] == "wayland":
-            print("Wayland：使用系统 im-config 集成；原生应用的候选框定位可能不同。")
-            print("为保持蓝白主题，使用 Classic UI；GNOME Shell 搜索框可能无法显示候选框。")
+            print("Wayland：部分应用可能出现候选框定位偏差，详见兼容性说明。")
         print("雾凇固定版本：", ICE_COMMIT)
-        print("将备份并调整输入法配置；完成后需要手动注销再登录。")
+        print("将备份并调整输入法配置；完成后请保存工作并重启电脑。")
     if args.dry_run:
         print("预览完成，没有安装软件、下载词库或写入用户配置。")
         return
@@ -254,7 +263,7 @@ def install(args, home):
             restore_files(home, backup)
             raise
         print("主题已安装，备份：", backup)
-        print("在 Fcitx5 配置中选择“清爽浅蓝”，或执行 fcitx5-remote -r 重新加载。")
+        show_restart_notice()
         return
     # Read GNOME settings before changing packages or user configuration.
     sources = run(["gsettings", "get", "org.gnome.desktop.input-sources", "sources"],
@@ -281,17 +290,14 @@ def install(args, home):
             layouts = [tuple(item) for item in previous if item[0] == "xkb"]
             run(["gsettings", "set", "org.gnome.desktop.input-sources", "sources",
                  repr(layouts or [("xkb", "us")])])
-            if shutil.which("fcitx5-remote"):
-                subprocess.run(["fcitx5-remote", "-r"], check=False,
-                               stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         except Exception:
             restore_files(home, backup)
             run(["gsettings", "set", "org.gnome.desktop.input-sources", "sources", sources])
             print("发生错误，已尝试恢复安装前配置。备份：", backup, file=sys.stderr)
             raise
-    print("安装完成。请保存工作，手动注销并重新登录。")
     print("Shift：中英切换；Ctrl+空格：Rime/英文键盘；空格/1–7：选词。")
     print("恢复命令：bash restore.sh", shlex.quote(str(backup)))
+    show_restart_notice()
 
 
 def restore(args, home):
@@ -303,7 +309,7 @@ def restore(args, home):
         run(["gsettings", "set", "org.gnome.desktop.input-sources", "sources",
              manifest["gnome_sources"]])
     print("已恢复配置；安装后的配置和学习数据保留在：", archive)
-    print("软件包仍保留。请保存工作，手动注销并重新登录。")
+    print("软件包仍保留。请保存工作并重启电脑。")
 
 
 def main():
