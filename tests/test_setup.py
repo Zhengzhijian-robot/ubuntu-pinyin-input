@@ -115,7 +115,7 @@ class InstallationTests(unittest.TestCase):
                  patch.dict(setup.os.environ, {"XDG_CURRENT_DESKTOP": "GNOME", "XDG_SESSION_TYPE": "wayland"}), \
                  patch.object(setup, "package_plan", return_value={"fcitx5": "5.1"}), \
                  patch.object(setup, "run") as commands:
-                setup.install(argparse.Namespace(theme_only=False, dry_run=True), Path(temp))
+                setup.install(argparse.Namespace(dry_run=True), Path(temp))
                 commands.assert_not_called()
                 self.assertEqual(list(Path(temp).iterdir()), [])
 
@@ -143,7 +143,7 @@ class InstallationTests(unittest.TestCase):
                  patch.object(setup, "build_ice", return_value=source), \
                  patch.object(setup, "run", side_effect=command):
                 with self.assertRaises(subprocess.CalledProcessError):
-                    setup.install(argparse.Namespace(theme_only=False, dry_run=False), home)
+                    setup.install(argparse.Namespace(dry_run=False), home)
             self.assertEqual(old_config.read_text(), "original settings")
             self.assertFalse((home / setup.RIME).exists())
             self.assertFalse((home / setup.THEME).exists())
@@ -175,7 +175,7 @@ class InstallationTests(unittest.TestCase):
                  patch.object(setup, "build_ice", return_value=source), \
                  patch.object(setup.shutil, "which", return_value="/usr/bin/fcitx5-remote"), \
                  patch.object(setup.subprocess, "run", side_effect=command), redirect_stdout(output):
-                setup.install(argparse.Namespace(theme_only=False, dry_run=False), home)
+                setup.install(argparse.Namespace(dry_run=False), home)
             self.assertEqual(len(calls), 4)
             self.assertTrue((home / setup.RIME / "test.schema.yaml").exists())
             self.assertIn("PreeditInApplication=False", (home / ".config/fcitx5/conf/rime.conf").read_text())

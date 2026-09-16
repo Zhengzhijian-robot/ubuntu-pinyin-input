@@ -60,9 +60,9 @@ def environment_plan(system, env):
     version = system.get("VERSION_ID", "")
     if (system.get("ID") != "ubuntu" or not re.fullmatch(r"\d+\.\d+", version)
             or tuple(map(int, version.split("."))) < (22, 4)):
-        raise RuntimeError("完整自动适配要求 Ubuntu 22.04 或更高版本；已有 Fcitx5 可用 --theme-only。")
+        raise RuntimeError("安装要求 Ubuntu 22.04 或更高版本。")
     if "gnome" not in env.get("XDG_CURRENT_DESKTOP", "").lower():
-        raise RuntimeError("当前仅实现 GNOME 桌面的完整适配；其他桌面可用 --theme-only。")
+        raise RuntimeError("安装要求 GNOME 桌面。")
     session = env.get("XDG_SESSION_TYPE", "")
     if session not in {"x11", "wayland"}:
         raise RuntimeError("请在 GNOME 桌面的终端运行，以识别 X11 / Wayland。")
@@ -235,36 +235,21 @@ def install(args, home):
     system = os_release()
     print("系统：", system.get("PRETTY_NAME"), "桌面：", os.getenv("XDG_CURRENT_DESKTOP"),
           "会话：", os.getenv("XDG_SESSION_TYPE"))
-    if args.theme_only:
-        if not shutil.which("fcitx5"):
-            raise RuntimeError("仅安装主题需要已有 Fcitx5。")
-        print("仅安装清爽蓝白主题；保留现有输入引擎、词库和快捷键。")
-    else:
-        plan = environment_plan(system, os.environ)
-        packages = package_plan()
-        print("适配方式：GNOME /", plan["session"], "；使用当前系统软件源版本。")
-        print("将安装：", " ".join(name + "=" + version for name, version in packages.items()))
-        if not plan["tested"]:
-            print("此环境自动适配；桌面实测记录见 docs/compatibility.md。")
-        if plan["session"] == "wayland":
-            print("Wayland：部分应用可能出现候选框定位偏差，详见兼容性说明。")
-        print("雾凇固定版本：", ICE_COMMIT)
-        print("将备份并调整输入法配置；完成后请保存工作并重启电脑。")
+    plan = environment_plan(system, os.environ)
+    packages = package_plan()
+    print("适配方式：GNOME /", plan["session"], "；使用当前系统软件源版本。")
+    print("将安装：", " ".join(name + "=" + version for name, version in packages.items()))
+    if not plan["tested"]:
+        print("此环境自动适配；桌面实测记录见 docs/compatibility.md。")
+    if plan["session"] == "wayland":
+        print("Wayland：部分应用可能出现候选框定位偏差，详见兼容性说明。")
+    print("雾凇固定版本：", ICE_COMMIT)
+    print("将备份并调整输入法配置；完成后请保存工作并重启电脑。")
     if args.dry_run:
         print("预览完成，没有安装软件、下载词库或写入用户配置。")
         return
-    paths = MANAGED[:2] if args.theme_only else MANAGED
+    paths = MANAGED
     check_paths(home, paths)
-    if args.theme_only:
-        backup = snapshot(home, paths)
-        try:
-            install_theme(home)
-        except Exception:
-            restore_files(home, backup)
-            raise
-        print("主题已安装，备份：", backup)
-        show_restart_notice()
-        return
     # Read GNOME settings before changing packages or user configuration.
     sources = run(["gsettings", "get", "org.gnome.desktop.input-sources", "sources"],
                   capture_output=True).stdout.strip()
@@ -316,7 +301,6 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
     p = commands.add_parser("install")
-    p.add_argument("--theme-only", action="store_true", help="只安装主题，不改词库和输入法")
     p.add_argument("--dry-run", action="store_true", help="只预览，不执行安装")
     p = commands.add_parser("restore")
     p.add_argument("backup", help="安装时输出的备份目录")
